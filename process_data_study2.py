@@ -236,4 +236,4 @@ if __name__ == '__main__':
     difficult_params = np.load('data/difficult.npz')
 
     features = compute_features(tabs, {'EASY': easy_params, 'DIFFICULT': difficult_params})
-   
+    
