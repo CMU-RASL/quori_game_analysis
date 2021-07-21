@@ -104,6 +104,13 @@ def compile_data(tabs):
                 answers['correct'] = np.where(answers['correct_bin'] == answers['chosen_bin'], 1, 0)
                 accuracy = np.mean(answers['correct'])
                 
+                #Last time a mistake was made
+                incorrect_ind = np.where(answers['correct'].values == 0)[0]
+                if incorrect_ind.shape[0] > 0:
+                    last_mistake = incorrect_ind[-1]
+                else:
+                    last_mistake = 0
+
                 #Switches
                 switches = tabs['trial'].loc[(tabs['trial']['round_num'] == round_num) &
                                                 (tabs['trial']['user_id'] == user_id), 'switches']
@@ -157,13 +164,13 @@ def compile_data(tabs):
                     else:
                         elapsed_time.append((current_time - previous_time).total_seconds())
                 elapsed_time_avg = np.mean(elapsed_time)
-
                 #Add to dataframe
                 data = {'condition_id': condition_id, 'user_id': user_id, 'accuracy': accuracy, 
                         'user_learning': user_learning, 'animacy': animacy_avg, 'intelligence': intelligence_avg,
                         'difficulty': difficulty, 'engagement': engagement,
                         'answers': answers['correct'].values.tolist(), 'switches': switches_avg, 'switches_arr': switches.values.tolist(),
-                        'elapsed_time': elapsed_time_avg, 'elapsed_time_arr': elapsed_time}
+                        'elapsed_time': elapsed_time_avg, 'elapsed_time_arr': elapsed_time,
+                        'last_mistake': last_mistake}
 
                 if round_num == 0:
                     data['difficulty'] = difficulty0
@@ -177,7 +184,7 @@ def compile_data(tabs):
     return(df)
 
 def plot_answers(data):
-    fig, ax = plt.subplots(3, 1)
+    fig, ax = plt.subplots(3, 1, sharey = True)
 
     #Perfect Learners
     with np.load('data/easy_50.npz') as data_perf:
@@ -245,7 +252,7 @@ def plot_answers(data):
     plt.show()
 
 def plot_time_series(data, col_name, name):
-    fig, ax = plt.subplots(2, 1)
+    fig, ax = plt.subplots(2, 1, sharey=True)
 
     #Top Graph - separated by difficulty - human
     easy_answers = np.vstack(data.loc[(data['difficulty'] == 'EASY'), col_name].to_numpy())
@@ -283,8 +290,6 @@ def two_way_anova(data, col_name):
     print(col_name)
     print(anova_table)
     print('---')
-# model = ols(' ~ C(Genotype) + C(years) + C(Genotype):C(years)', data=d_melt).fit()
-# anova_table = sm.stats.anova_lm(model, typ=2)
 
 def compare_dists_answers(data):
     #Perfect Learners
@@ -347,14 +352,34 @@ def compare_dists_other(data, col_name):
     
     print(df_p)
 
+def expected_accuracy():
+    #Perfect Learners
+    with np.load('data/easy_50.npz') as data_perf:
+        easy_all_prob=data_perf['all_prob'][:,-8:]
+        easy_all_prob_best=data_perf['all_prob_best'][:,-8:]
+    with np.load('data/difficult_50.npz') as data_perf:
+        difficult_all_prob=data_perf['all_prob'][:,-8:]
+        difficult_all_prob_best=data_perf['all_prob_best'][:,-8:]
+    
+    easy = np.mean(easy_all_prob)
+    easy_best = np.mean(easy_all_prob_best)
+    difficult = np.mean(difficult_all_prob)
+    difficult_best = np.mean(difficult_all_prob_best)
+    print(easy, easy_best, difficult, difficult_best)
+
+
 if __name__ == '__main__':
     tabs = read_tables()
     data = compile_data(tabs)
+    # print(tabs['survey'])
+    # print(data[['difficulty', 'answers', 'user_id', 'last_mistake']])
+    # print(tabs['user'])
     # plot_answers(data)
     # plot_time_series(data, 'elapsed_time_arr', 'Elapsed Time (sec)')
     # plot_time_series(data, 'switches_arr', 'Number of Switches')
-    # two_way_anova(data, 'elapsed_time')
+    # two_way_anova(data, 'last_mistake')
     # compare_dists_answers(data)
     # compare_dists_other(data, 'elapsed_time_arr')
     # compare_dists_other(data, 'switches_arr')
+    # expected_accuracy()
     
