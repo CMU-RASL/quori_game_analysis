@@ -115,3 +115,6 @@ dmypy.json
 
 data/*.db
 .vscode/
+data/*.csv
+data/*.txt
+adjustments.py
