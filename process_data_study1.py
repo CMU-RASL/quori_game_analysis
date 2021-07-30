@@ -91,8 +91,10 @@ def compile_data(tabs):
 
         #User Id
         user_id = tabs['user'].at[user_index, 'id'].item()
-        
+
         username = tabs['user'].at[user_index, 'username']
+
+        #Add from adjustments.py
 
         #Only use approved ids
         if username in approved_ids:
@@ -120,7 +122,7 @@ def compile_data(tabs):
                 if incorrect_ind.shape[0] > 0:
                     last_mistake = incorrect_ind[-1]
                 else:
-                    last_mistake = 0
+                    last_mistake = -1
 
                 #Switches
                 switches = tabs['trial'].loc[(tabs['trial']['round_num'] == round_num) &
@@ -203,7 +205,6 @@ def compile_data(tabs):
                     data['nonverbal'] = nonverbal1
                 
                 df = df.append(data, ignore_index=True)
-    
     cols=['condition_id', 'user_id', 'user_learning', 'engagement', 'last_mistake']
     df[cols] = df[cols].apply(pd.to_numeric, errors='coerce', axis=1)
 
