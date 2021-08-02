@@ -10,6 +10,7 @@ from datetime import datetime
 import statsmodels.api as sm
 from statsmodels.formula.api import ols
 from scipy.stats import ttest_ind
+import pingouin as pg
 
 database_filename = 'data/study1.db'
 approved_ids_filename = 'data/study1_prolific_approval.txt'
@@ -85,7 +86,7 @@ def compile_data(tabs):
             approved_ids.append(line[:-1])
 
     df = pd.DataFrame(columns=('condition_id', 'user_id', 'accuracy', 'user_learning', 'animacy', 'intelligence', 'difficulty', 'engagement', 
-                                'answers', 'switches', 'switches_arr', 'elapsed_time', 'elapsed_time_arr', 'last_mistake'))
+                                'answers', 'switches', 'switches_arr', 'elapsed_time', 'elapsed_time_arr', 'last_mistake', 'animacy_arr', 'intelligence_arr'))
 
     for user_index in range(tabs['user'].shape[0]):
 
@@ -195,7 +196,7 @@ def compile_data(tabs):
                         'perceived_difficulty': difficulty, 'engagement': engagement,
                         'answers': answers['correct'].values.tolist(), 'switches': switches_avg, 'switches_arr': switches.values.tolist(),
                         'elapsed_time': elapsed_time_avg, 'elapsed_time_arr': elapsed_time,
-                        'last_mistake': last_mistake}
+                        'last_mistake': last_mistake, 'animacy_arr': animacy, 'intelligence_arr': intelligence}
 
                 if round_num == 0:
                     data['difficulty'] = difficulty0
@@ -424,11 +425,61 @@ def expected_accuracy():
     difficult_best = np.mean(difficult_all_prob_best)
     print(easy, easy_best, difficult, difficult_best)
 
+def cronbach(data):
+    #Animacy
+    subj = []
+    items = []
+    scores = []
+    for row_ind in range(data.shape[0]):
+        if isinstance(data.at[row_ind, 'animacy_arr'],np.ndarray):
+            scores.append(data.at[row_ind, 'animacy_arr'][0])
+            scores.append(data.at[row_ind, 'animacy_arr'][1])
+            scores.append(data.at[row_ind, 'animacy_arr'][2])
+        else:
+            scores.append(data.at[row_ind, 'animacy_arr']['animacy1'].iloc[0])
+            scores.append(data.at[row_ind, 'animacy_arr']['animacy2'].iloc[0])
+            scores.append(data.at[row_ind, 'animacy_arr']['animacy3'].iloc[0])
+
+        subj.append(str(data.at[row_ind, 'user_id'])+'-'+str(data.at[row_ind, 'difficulty'])+str(data.at[row_ind, 'nonverbal']))
+        items.append('animacy1')
+        
+        subj.append(str(data.at[row_ind, 'user_id'])+'-'+str(data.at[row_ind, 'difficulty'])+str(data.at[row_ind, 'nonverbal']))
+        items.append('animacy2')
+        
+        subj.append(str(data.at[row_ind, 'user_id'])+'-'+str(data.at[row_ind, 'difficulty'])+str(data.at[row_ind, 'nonverbal']))
+        items.append('animacy3')
+        
+    
+    animacy_data = pd.DataFrame({'subj': subj, 'items': items, 'scores': scores})
+    print('Animacy')
+    print(pg.cronbach_alpha(data=animacy_data, items='items', scores='scores', subject='subj'))
+
+    #Intelligence
+    subj = []
+    items = []
+    scores = []
+    for row_ind in range(data.shape[0]):
+        if isinstance(data.at[row_ind, 'intelligence_arr'],np.ndarray):
+            scores.append(data.at[row_ind, 'intelligence_arr'][0])
+            scores.append(data.at[row_ind, 'intelligence_arr'][1])
+        else:
+            scores.append(data.at[row_ind, 'intelligence_arr']['intelligence1'].iloc[0])
+            scores.append(data.at[row_ind, 'intelligence_arr']['intelligence2'].iloc[0])
+
+        subj.append(str(data.at[row_ind, 'user_id'])+'-'+str(data.at[row_ind, 'difficulty'])+str(data.at[row_ind, 'nonverbal']))
+        items.append('intelligence1')
+        
+        subj.append(str(data.at[row_ind, 'user_id'])+'-'+str(data.at[row_ind, 'difficulty'])+str(data.at[row_ind, 'nonverbal']))
+        items.append('intelligence2')
+        
+        
+    intelligence_data = pd.DataFrame({'subj': subj, 'items': items, 'scores': scores})
+    print('Intelligence')
+    print(pg.cronbach_alpha(data=intelligence_data, items='items', scores='scores', subject='subj'))
 
 if __name__ == '__main__':
     tabs = read_tables()
     data = compile_data(tabs)
-
     '''
     ['condition_id', 'user_id', 'accuracy', 'user_learning', 'animacy',
         'intelligence', 'difficulty', 'engagement', 'answers', 'switches',
@@ -455,3 +506,4 @@ if __name__ == '__main__':
     # compare_dists_other(data, 'switches_arr')
     # expected_accuracy()
     
+    cronbach(data)
