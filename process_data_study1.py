@@ -12,8 +12,10 @@ from statsmodels.formula.api import ols
 from scipy.stats import ttest_ind
 import pingouin as pg
 
-database_filename = 'data/study1.db'
-approved_ids_filename = 'data/study1_prolific_approval.txt'
+database_filename = 'data/study1_full.db'
+approved_ids_filename = 'data/study1_full_prolific_approval.txt'
+easy_answers = [1, 0, 0, 1, 1, 0, 1, 1]
+difficult_answers = [0, 1, 0, 0, 0, 1, 0, 0]
 
 def read_tables():
 
@@ -86,7 +88,7 @@ def compile_data(tabs):
             approved_ids.append(line[:-1])
 
     df = pd.DataFrame(columns=('condition_id', 'user_id', 'accuracy', 'user_learning', 'animacy', 'intelligence', 'difficulty', 'engagement', 
-                                'answers', 'switches', 'switches_arr', 'elapsed_time', 'elapsed_time_arr', 'last_mistake', 'animacy_arr', 'intelligence_arr'))
+                                'answers', 'switches', 'switches_arr', 'elapsed_time', 'elapsed_time_arr', 'last_mistake', 'animacy_arr', 'intelligence_arr', 'feedback'))
 
     for user_index in range(tabs['user'].shape[0]):
 
@@ -94,7 +96,7 @@ def compile_data(tabs):
         user_id = tabs['user'].at[user_index, 'id'].item()
 
         username = tabs['user'].at[user_index, 'username']
-
+        
         #Add from adjustments.py
 
         #Only use approved ids
@@ -115,6 +117,10 @@ def compile_data(tabs):
                 #Accuracy
                 answers = tabs['trial'].loc[(tabs['trial']['round_num'] == round_num) &
                                                 (tabs['trial']['user_id'] == user_id), ['correct_bin', 'chosen_bin']]
+                if (round_num == 0 and difficulty0 == 'EASY') or (round_num == 1 and difficulty1 == 'EASY'):
+                    answers['correct_bin'] = easy_answers
+                else:
+                    answers['correct_bin'] = difficult_answers
                 answers['correct'] = np.where(answers['correct_bin'] == answers['chosen_bin'], 1, 0)
                 accuracy = np.mean(answers['correct'])
                 
@@ -156,9 +162,11 @@ def compile_data(tabs):
                 difficulty = tabs['survey'].loc[(tabs['survey']['round_num'] == round_num) &
                                                 (tabs['survey']['user_id'] == user_id), 'difficulty'].iloc[0]
 
-  
-                engagement = tabs['survey'].loc[(tabs['survey']['round_num'] == round_num) &
-                                                (tabs['survey']['user_id'] == user_id), 'engagement'].iloc[0]
+                if database_filename == 'data/pilot_study1.db':
+                    engagement = 2
+                else:
+                    engagement = tabs['survey'].loc[(tabs['survey']['round_num'] == round_num) &
+                                                    (tabs['survey']['user_id'] == user_id), 'engagement'].iloc[0]
                 
                 #Get time per trial
 
@@ -189,6 +197,9 @@ def compile_data(tabs):
                     else:
                         elapsed_time.append((current_time - previous_time).total_seconds())
                 elapsed_time_avg = np.mean(elapsed_time)
+                
+                feedback = tabs['survey'].loc[(tabs['survey']['round_num'] == round_num) &
+                        (tabs['survey']['user_id'] == user_id), 'opt_text'].iloc[0]
 
                 #Add to dataframe
                 data = {'condition_id': condition_id, 'user_id': user_id, 'accuracy': accuracy, 
@@ -196,7 +207,8 @@ def compile_data(tabs):
                         'perceived_difficulty': difficulty, 'engagement': engagement,
                         'answers': answers['correct'].values.tolist(), 'switches': switches_avg, 'switches_arr': switches.values.tolist(),
                         'elapsed_time': elapsed_time_avg, 'elapsed_time_arr': elapsed_time,
-                        'last_mistake': last_mistake, 'animacy_arr': animacy, 'intelligence_arr': intelligence}
+                        'last_mistake': last_mistake, 'animacy_arr': animacy, 'intelligence_arr': intelligence,
+                        'feedback': feedback}
 
                 if round_num == 0:
                     data['difficulty'] = difficulty0
@@ -204,7 +216,7 @@ def compile_data(tabs):
                 else:
                     data['difficulty'] = difficulty1
                     data['nonverbal'] = nonverbal1
-                
+
                 df = df.append(data, ignore_index=True)
     cols=['condition_id', 'user_id', 'user_learning', 'engagement', 'last_mistake']
     df[cols] = df[cols].apply(pd.to_numeric, errors='coerce', axis=1)
@@ -340,7 +352,7 @@ def two_way_anova(data, col_name):
     ax.set_xticks(x_pos)
     ax.set_xticklabels(labels)
     ax.yaxis.grid(True)
-    # plt.show()
+    plt.show()
 
     model = ols(col_name + ' ~ C(difficulty) + C(nonverbal) + C(difficulty):C(nonverbal)', data=data).fit()
     anova_table = sm.stats.anova_lm(model, type=2)
@@ -477,16 +489,31 @@ def cronbach(data):
     print('Intelligence')
     print(pg.cronbach_alpha(data=intelligence_data, items='items', scores='scores', subject='subj'))
 
+def sorted_feedback(data):
+    difficulty = ['EASY', 'DIFFICULT']
+    nonverbal = ['NEUTRAL', 'NONVERBAL']
+
+    for diff in difficulty:
+        for non in nonverbal:
+            print(diff, non)
+            feedback = data.loc[(data['difficulty'] == diff) & (data['nonverbal'] == non), 'feedback']
+            for feed in feedback:
+                if len(feed) > 0:
+                    print(feed)
+            print('---')
+
 if __name__ == '__main__':
     tabs = read_tables()
     data = compile_data(tabs)
+
     '''
     ['condition_id', 'user_id', 'accuracy', 'user_learning', 'animacy',
         'intelligence', 'difficulty', 'engagement', 'answers', 'switches',
         'switches_arr', 'elapsed_time', 'elapsed_time_arr', 'last_mistake',
         'nonverbal', 'perceived_difficulty']
     '''
-
+    # print(data[['user_id', 'difficulty', 'nonverbal', 'answers', 'last_mistake', 'accuracy']])
+    # print(data[['user_id', 'difficulty', 'nonverbal', 'animacy', 'intelligence', 'perceived_difficulty', 'engagement']])
     # plot_answers(data)
     # plot_time_series(data, 'elapsed_time_arr', 'Elapsed Time (sec)')
     # plot_time_series(data, 'switches_arr', 'Number of Switches')
@@ -506,4 +533,5 @@ if __name__ == '__main__':
     # compare_dists_other(data, 'switches_arr')
     # expected_accuracy()
     
-    cronbach(data)
+    # cronbach(data)
+    sorted_feedback(data)
