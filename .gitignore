@@ -118,3 +118,6 @@ data/*.db
 data/*.csv
 data/*.txt
 adjustments.py
+*.jpg
+*.csv
+
