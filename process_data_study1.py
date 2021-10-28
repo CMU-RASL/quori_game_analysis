@@ -12,6 +12,7 @@ from statsmodels.formula.api import ols
 from scipy.stats import ttest_ind
 import pingouin as pg
 from statsmodels.stats.multicomp import pairwise_tukeyhsd
+import pickle as pkl
 
 database_filenames = ['data/study1_full.db', 'data/study1_2_full.db']
 approved_ids_filenames = ['data/study1_full_prolific_approval.txt', 'data/study1_2_full_prolific_approval.txt']
@@ -625,6 +626,11 @@ if __name__ == '__main__':
 
     # print((np.mean(data['accuracy']) - 1/8)/np.std(data['accuracy']))
     data = data.loc[data['accuracy'] > 1/8]
+    
+    filehandler = open('data/study1_data.pkl',"wb")
+    pkl.dump(data,filehandler)
+    filehandler.close()
+
     # plot_answers(data)
     # plot_time_series(data, 'elapsed_time_arr', 'Elapsed Time (sec)')
     # plot_time_series(data, 'switches_arr', 'Number of Switches')
