@@ -2,9 +2,9 @@ import csv
 import pandas as pd
 import sqlite3
 
-prolific_file_name = 'data/study1_2_full_prolific.csv'
-db_file_name = 'data/study1_2_full.db'
-output_file_name = 'data/study1_2_full_prolific_approval.txt'
+prolific_file_name = 'data/study3_1_full_prolific.csv'
+db_file_name = 'data/study3_1_full.db'
+output_file_name = 'data/study3_1_full_prolific_approval.txt'
 
 #Read CSV
 ids = []

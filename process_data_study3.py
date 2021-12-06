@@ -14,8 +14,9 @@ import pingouin as pg
 from statsmodels.stats.multicomp import pairwise_tukeyhsd
 import pickle as pkl
 
-database_filenames = ['data/study1_full.db', 'data/study1_2_full.db']
-approved_ids_filenames = ['data/study1_full_prolific_approval.txt', 'data/study1_2_full_prolific_approval.txt']
+
+database_filenames = ['data/study3_1_full.db']
+approved_ids_filenames = ['data/study3_1_full_prolific_approval.txt']
 easy_answers = [1, 0, 0, 1, 1, 0, 1, 1]
 difficult_answers = [0, 1, 0, 0, 0, 1, 0, 0]
 plt.rcParams.update({'font.size': 16})
@@ -26,7 +27,7 @@ warnings.filterwarnings("ignore")
 def read_tables():   
     # Create your connection.
     cnx1 = sqlite3.connect(database_filenames[0])
-    cnx2 = sqlite3.connect(database_filenames[1])
+    # cnx2 = sqlite3.connect(database_filenames[1])
 
     #Condition
     condition_tab = pd.read_sql_query("SELECT * FROM condition", cnx1)
@@ -44,17 +45,17 @@ def read_tables():
         condition_tab.at[index, 'nonverbal0'] = CONDITIONS[index][0][1]
         condition_tab.at[index, 'nonverbal1'] = CONDITIONS[index][1][1]
 
-    condition_tab2 = pd.read_sql_query("SELECT * FROM condition", cnx1)
-    for index in range(8):
-        count = condition_tab2.at[index, 'count']
-        condition_tab.at[index, 'count'] += count
+    # condition_tab2 = pd.read_sql_query("SELECT * FROM condition", cnx1)
+    # for index in range(8):
+    #     count = condition_tab2.at[index, 'count']
+    #     condition_tab.at[index, 'count'] += count
     
     #User
     user_tab = pd.read_sql_query("SELECT * from user", cnx1)
-    user_tab2 = pd.read_sql_query("SELECT * from user", cnx2)
-    user_tab2['id'] += 200
-    user_tab2.index += 200
-    user_tab = pd.concat([user_tab, user_tab2])
+    # user_tab2 = pd.read_sql_query("SELECT * from user", cnx2)
+    # user_tab2['id'] += 200
+    # user_tab2.index += 200
+    # user_tab = pd.concat([user_tab, user_tab2])
 
     trials_tab = pd.read_sql_query("SELECT * from trial", cnx1)
     for index in range(trials_tab.shape[0]):
@@ -83,46 +84,46 @@ def read_tables():
         #Get rule
         trials_tab.at[index, 'rule_set'] = RULE_PROPS[difficulty]['rule']
 
-    trials_tab2 = pd.read_sql_query("SELECT * from trial", cnx2)
-    trials_tab2['user_id'] += 200
+    # trials_tab2 = pd.read_sql_query("SELECT * from trial", cnx2)
+    # trials_tab2['user_id'] += 200
 
-    for index in range(trials_tab2.shape[0]):
-        #Get User id
-        user_id = trials_tab2.at[index, 'user_id'].item()
+    # for index in range(trials_tab2.shape[0]):
+    #     #Get User id
+    #     user_id = trials_tab2.at[index, 'user_id'].item()
 
-        #Get condition id
-        condition_id = user_tab.loc[user_tab['id'] == user_id, 'condition_id'].item()
+    #     #Get condition id
+    #     condition_id = user_tab.loc[user_tab['id'] == user_id, 'condition_id'].item()
         
-        #Get round
-        round_num = trials_tab2.at[index, 'round_num'].item()
+    #     #Get round
+    #     round_num = trials_tab2.at[index, 'round_num'].item()
 
-        #Get trial_num
-        trial_num = trials_tab2.at[index, 'trial_num'].item()
+    #     #Get trial_num
+    #     trial_num = trials_tab2.at[index, 'trial_num'].item()
 
-        #Get difficulty
-        if round_num == 0:
-            difficulty = condition_tab.loc[condition_tab['id'] == condition_id, 'difficulty0'].item()
-        else:
-            difficulty = condition_tab.loc[condition_tab['id'] == condition_id, 'difficulty1'].item()
+    #     #Get difficulty
+    #     if round_num == 0:
+    #         difficulty = condition_tab.loc[condition_tab['id'] == condition_id, 'difficulty0'].item()
+    #     else:
+    #         difficulty = condition_tab.loc[condition_tab['id'] == condition_id, 'difficulty1'].item()
         
-        #Get correct bin for trial
-        correct_bin = RULE_PROPS[difficulty]['answers'][round_num]
-        trials_tab2.at[index, 'correct_bin'] = correct_bin
+    #     #Get correct bin for trial
+    #     correct_bin = RULE_PROPS[difficulty]['answers'][round_num]
+    #     trials_tab2.at[index, 'correct_bin'] = correct_bin
 
-        #Get rule
-        trials_tab2.at[index, 'rule_set'] = RULE_PROPS[difficulty]['rule']
+    #     #Get rule
+    #     trials_tab2.at[index, 'rule_set'] = RULE_PROPS[difficulty]['rule']
 
-    trials_tab = pd.concat([trials_tab, trials_tab2])
+    # trials_tab = pd.concat([trials_tab, trials_tab2])
 
     demos_tab = pd.read_sql_query("SELECT * from demo", cnx1)
-    demos_tab2 = pd.read_sql_query("SELECT * from demo", cnx2)
-    demos_tab2['user_id'] += 200
-    demos_tab = pd.concat([demos_tab, demos_tab2])
+    # demos_tab2 = pd.read_sql_query("SELECT * from demo", cnx2)
+    # demos_tab2['user_id'] += 200
+    # demos_tab = pd.concat([demos_tab, demos_tab2])
 
     survey_tab = pd.read_sql_query("SELECT * from survey", cnx1)
-    survey_tab2 = pd.read_sql_query("SELECT * from survey", cnx2)
-    survey_tab2['user_id'] += 200
-    survey_tab = pd.concat([survey_tab, survey_tab2])
+    # survey_tab2 = pd.read_sql_query("SELECT * from survey", cnx2)
+    # survey_tab2['user_id'] += 200
+    # survey_tab = pd.concat([survey_tab, survey_tab2])
    
     return {'condition': condition_tab, 'user': user_tab, 'trial': trials_tab, 'demo': demos_tab, 'survey': survey_tab}
 
@@ -627,8 +628,10 @@ def tukey_test(data):
 if __name__ == '__main__':
     tabs = read_tables()
     data, demographics = compile_data(tabs)
-
+    print(data.shape)
+    # print((np.mean(data['accuracy']) - 1/8)/np.std(data['accuracy']))
     # data = data.loc[data['accuracy'] > 1/8]
+    # print(data.shape)
     # filehandler = open('data/study1_data.pkl',"wb")
     # pkl.dump(data,filehandler)
     # filehandler.close()
@@ -637,7 +640,7 @@ if __name__ == '__main__':
     # plot_time_series(data, 'elapsed_time_arr', 'Elapsed Time (sec)')
     # plot_time_series(data, 'switches_arr', 'Number of Switches')
 
-    # two_way_anova(data, 'accuracy', 'Accuracy')
+    two_way_anova(data, 'accuracy', 'Accuracy')
     # two_way_anova(data, 'user_learning', 'User Learning')
     # two_way_anova(data, 'perceived_difficulty', 'Perceived Difficulty')
     # two_way_anova(data, 'engagement', 'Engagement')

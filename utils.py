@@ -232,7 +232,7 @@ def create_card_order(card_num, true_hyp, staggered=False):
 
     return card_order, num_hypotheses_arr, equiv_cards_arr
 
-def perfect_learner(card_order, true_hyp, difficulty_adjustment=False, prop_weights=False, staggered=False):
+def learner_model(card_order, true_hyp, difficulty_adjustment=False, prop_weights=False, staggered=False):
     
     all_hyp = create_all_hypotheses()
     cards = create_all_cards()
@@ -254,10 +254,7 @@ def perfect_learner(card_order, true_hyp, difficulty_adjustment=False, prop_weig
                         hyp_diff[0, card_num] += 1
                     else:
                         hyp_diff[1, card_num] += 1
-        if staggered and np.sum(hyp_valid[:24]) > 0: #Only look at early if staggered and all early have not been eliminated
-            tmp1, hyp_removed_ind = calc_hyp_removed(all_hyp[:24], hyp_valid[:24], true_hyp, cards[card_order[card_num],:,:])
-        else:
-            tmp1, hyp_removed_ind = calc_hyp_removed(all_hyp, hyp_valid, true_hyp, cards[card_order[card_num],:,:])
+        tmp1, hyp_removed_ind = calc_hyp_removed(all_hyp, hyp_valid, true_hyp, cards[card_order[card_num],:,:])
         hyp_valid[hyp_removed_ind] = 0
         
     
