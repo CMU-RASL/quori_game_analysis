@@ -2,9 +2,9 @@ import csv
 import pandas as pd
 import sqlite3
 
-prolific_file_name = 'data/study3_1_full_prolific.csv'
-db_file_name = 'data/study3_1_full.db'
-output_file_name = 'data/study3_1_full_prolific_approval.txt'
+prolific_file_name = 'data/study4_1_full_prolific.csv'
+db_file_name = 'data/study4_1_full.db'
+output_file_name = 'data/study4_1_full_prolific_approval.txt'
 
 #Read CSV
 ids = []
@@ -21,8 +21,6 @@ with open(prolific_file_name, newline='') as csvfile:
             decisions.append('ACCEPT')
         else:
             decisions.append('REJECT')
-        # if row['entered_code'] == 'i88ukKmKe':
-        #     print('here')
 prolific_tab = pd.DataFrame({'id': ids, 'status': statuses, 'code': codes, 'decision': decisions})
 
 #Read Database
@@ -35,7 +33,7 @@ approved_ids = []
 for index in range(user_tab.shape[0]):
     user_id = user_tab.at[index, 'username']
     code = user_tab.at[index,'code']
-    
+
     #Adjustments - Get this from adjustments.py!
 
     #Get row in prolific tab
@@ -52,6 +50,7 @@ for index in range(user_tab.shape[0]):
             if code == prolific_code:
                 prolific_tab.loc[prolific_tab['id'] == user_id, 'decision'] = 'ACCEPT'
                 approved_ids.append(user_id)
+
         if status == 'APPROVED':
             approved_ids.append(user_id)
 
