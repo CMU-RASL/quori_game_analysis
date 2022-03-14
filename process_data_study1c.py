@@ -2,7 +2,7 @@ import sqlite3
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from data.utils import *
+from data.archive.utils import *
 import pickle as pkl
 
 

@@ -8,7 +8,7 @@ from statsmodels.stats.multicomp import pairwise_tukeyhsd
 from pingouin import mixed_anova
 
 def two_way_anova(data, col_name, title):
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(3,4))
     unique_arr = data["nonverbal"].unique()
 
     easy = np.vstack(data.loc[(data['difficulty'] == 'EASY'), col_name].to_numpy())
@@ -28,12 +28,12 @@ def two_way_anova(data, col_name, title):
         std_list.append(np.std(cur,axis=0)[0])
         data_list.append(cur)
     
-    labels = ['Easy', 'Difficult']
+    labels = []
     labels.extend(unique_arr)
-    x_pos = np.arange(len(unique_arr) + 2)
-    means = [easy_mean, difficult_mean]
+    x_pos = np.arange(len(unique_arr))
+    means = []
     means.extend(mean_list)
-    stds = [easy_std, difficult_std]
+    stds = []
     stds.extend(std_list)
 
     ax.bar(x_pos, means, yerr=stds, align='center', alpha=0.5, ecolor='black', capsize=10)
@@ -79,10 +79,10 @@ def two_way_anova(data, col_name, title):
     print(aov)
     print('---')
 
-def tukey_test(data, col_name):
-    # data['combo'] = data['difficulty'] + " / " + data['nonverbal']
-    # m_comp = pairwise_tukeyhsd(endog=data['accuracy'], groups=data['combo'], alpha=0.05)
-    m_comp = pairwise_tukeyhsd(endog=data[col_name], groups=data['nonverbal'], alpha=0.05)
+def posthoc(data, col_name):
+    data['combo'] = data['difficulty'] + " / " + data['nonverbal']
+    m_comp = pairwise_tukeyhsd(endog=data[col_name], groups=data['combo'], alpha=0.05)
+    # m_comp = pairwise_tukeyhsd(endog=data[col_name], groups=data['nonverbal'], alpha=0.05)
     tukey_data = pd.DataFrame(data=m_comp._results_table.data[1:], columns = m_comp._results_table.data[0])
     print('---')
     print(col_name)
@@ -162,7 +162,7 @@ if __name__ == "__main__":
     file = open("data/study1a_data.pkl",'rb')
     study1a = pkl.load(file)
     file.close()
-    study1a['nonverbal'] = study1a['nonverbal'].map({'NONVERBAL': 'MATCHING', 'NEUTRAL': 'NEUTRAL1'})
+    study1a['nonverbal'] = study1a['nonverbal'].map({'NONVERBAL': 'MATCHING', 'NEUTRAL': 'NEUTRAL'})
     
     file = open("data/study1b_data.pkl",'rb')
     study1b = pkl.load(file)
@@ -175,19 +175,20 @@ if __name__ == "__main__":
     file.close()
     study1c['user_id'] = study1c['user_id'] + 2000
     
-    # data = pd.concat([study1, study3], ignore_index=True)
-    data = study1c
+    # data = pd.concat([study1a, study1c], ignore_index=True)
+    data = study1b
     # data = data.loc[data['nonverbal'] != 'NEUTRAL1']
     # data = data.loc[data['nonverbal'] != 'NEUTRAL2']
     # data = data.loc[data['nonverbal'] != 'NEUTRAL']
     # data = data.loc[data['nonverbal'] != 'MATCHING']
     # data = data.loc[data['nonverbal'] != 'NONMATCHING']
     # print(data)
-    two_way_anova(data, 'accuracy', 'Accuracy')
-    two_way_anova(data, 'user_learning', 'User Learning')
+    # two_way_anova(data, 'accuracy', 'Accuracy')
+    # two_way_anova(data, 'user_learning', 'User Learning')
     two_way_anova(data, 'perceived_difficulty', 'Perceived Difficulty')
-    two_way_anova(data, 'engagement', 'Engagement')
-    two_way_anova(data, 'animacy', 'Animacy')
-    two_way_anova(data, 'intelligence', 'Intelligence')
+    # two_way_anova(data, 'engagement', 'Engagement')
+    # two_way_anova(data, 'animacy', 'Animacy')
+    # two_way_anova(data, 'intelligence', 'Intelligence')
+    # posthoc(data, 'user_learning')
     # sorted_feedback(data)
      

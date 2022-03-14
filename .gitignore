@@ -120,4 +120,5 @@ data/*.txt
 adjustments.py
 *.jpg
 *.csv
+*.pkl
 

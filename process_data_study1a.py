@@ -4,7 +4,7 @@ from data.params_study1 import *
 from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
-from data.utils import *
+from data.archive.utils import *
 from datetime import datetime
 import pickle as pkl
 
