@@ -5,8 +5,8 @@ from datetime import datetime
 import numpy as np
 import pickle as pkl
 
-database_filename = 'data/study2.db'
-features_filename = 'data/study2_users/'
+database_filenames = ['data/study2.db', 'data/study2_2.db']
+features_filenames = ['data/study2_users/', 'data/study2_users_2/']
 
 easy_answers = [1, 0, 0, 1, 1, 0, 1, 1]
 difficult_answers = [0, 1, 0, 0, 0, 1, 0, 0]
@@ -15,9 +15,11 @@ RULE_PROPS = {'EASY': {'rule': 'diamonds on left, all others on right', 'demo_ca
             'DIFFICULT': {'rule': 'green-one, red/purple on left, green two/three on right', 'demo_cards': [61, 34], 'cards': [33, 32, 42, 17, 68, 29, 26, 45],'demo_answers': [0, 1], 'answers': [0, 1, 0, 0, 0, 1, 0, 0]}}
 pd.options.mode.chained_assignment = None
 PERFECT = {'EASY': [0.52, 0.26, 0.39, 0.5,  1.,   1. ,  1.,   1.  ], 'DIFFICULT': [0.08, 0.32, 1. ,  1.  , 1.  , 1. ,  1. ,  1.  ]}
+
 def read_tables():   
     # Create your connection.
-    cnx1 = sqlite3.connect(database_filename)
+    cnx1 = sqlite3.connect(database_filenames[0])
+    cnx2 = sqlite3.connect(database_filenames[1])
 
     #Condition
     condition_tab = pd.read_sql_query("SELECT * FROM condition", cnx1)
@@ -35,8 +37,17 @@ def read_tables():
         condition_tab.at[index, 'nonverbal0'] = CONDITIONS[index][0][1]
         condition_tab.at[index, 'nonverbal1'] = CONDITIONS[index][1][1]
     
+    condition_tab2 = pd.read_sql_query("SELECT * FROM condition", cnx1)
+    for index in range(2):
+        count = condition_tab2.at[index, 'count']
+        condition_tab.at[index, 'count'] += count
+
     #User
     user_tab = pd.read_sql_query("SELECT * from user", cnx1)
+    user_tab2 = pd.read_sql_query("SELECT * from user", cnx2)
+    user_tab2['id'] += 200
+    user_tab2.index += 200
+    user_tab = pd.concat([user_tab, user_tab2])
 
     trials_tab = pd.read_sql_query("SELECT * from trial", cnx1)
     for index in range(trials_tab.shape[0]):
@@ -65,29 +76,86 @@ def read_tables():
         #Get rule
         trials_tab.at[index, 'rule_set'] = RULE_PROPS[difficulty]['rule']
 
+    trials_tab2 = pd.read_sql_query("SELECT * from trial", cnx2)
+    trials_tab2['user_id'] += 200
+
+    for index in range(trials_tab2.shape[0]):
+        #Get User id
+        user_id = trials_tab2.at[index, 'user_id'].item()
+
+        #Get condition id
+        condition_id = user_tab.loc[user_tab['id'] == user_id, 'condition_id'].item()
+        
+        #Get round
+        round_num = trials_tab2.at[index, 'round_num'].item()
+
+        #Get trial_num
+        trial_num = trials_tab2.at[index, 'trial_num'].item()
+
+        #Get difficulty
+        if round_num == 0:
+            difficulty = condition_tab.loc[condition_tab['id'] == condition_id, 'difficulty0'].item()
+        else:
+            difficulty = condition_tab.loc[condition_tab['id'] == condition_id, 'difficulty1'].item()
+        
+        #Get correct bin for trial
+        correct_bin = RULE_PROPS[difficulty]['answers'][round_num]
+        trials_tab2.at[index, 'correct_bin'] = correct_bin
+
+        #Get rule
+        trials_tab2.at[index, 'rule_set'] = RULE_PROPS[difficulty]['rule']
+
+    trials_tab = pd.concat([trials_tab, trials_tab2])
+
     demos_tab = pd.read_sql_query("SELECT * from demo", cnx1)
+    demos_tab2 = pd.read_sql_query("SELECT * from demo", cnx2)
+    demos_tab2['user_id'] += 200
+    demos_tab = pd.concat([demos_tab, demos_tab2])
 
     survey_tab = pd.read_sql_query("SELECT * from survey", cnx1)
+    survey_tab2 = pd.read_sql_query("SELECT * from survey", cnx2)
+    survey_tab2['user_id'] += 200
+    survey_tab = pd.concat([survey_tab, survey_tab2])
    
     return {'condition': condition_tab, 'user': user_tab, 'trial': trials_tab, 'demo': demos_tab, 'survey': survey_tab}
 
 def read_facial(valid_users):
     features = []
     num = 0
-    for user_folder in os.listdir(features_filename):
-        features_folder = '{}{}/features'.format(features_filename, user_folder)
+    print(valid_users)
+    for user_folder in os.listdir(features_filenames[0]):
+        features_folder = '{}{}/features'.format(features_filenames[0], user_folder)
         user_id = features_folder.split('/')[-2]
         if int(user_id) in valid_users:
             for feature_file in os.listdir(features_folder):
                 cur_feat = pd.read_csv('{}/{}'.format(features_folder, feature_file))
                 if (cur_feat.shape[0] == 1):
                     if not pd.isna(cur_feat['FaceRectX'].item()):
-                        cur_feat['user'] = user_id
+                        cur_feat['user'] = int(user_id)
                         timestamp = cur_feat['input'].item()[-23:-4]
                         timestamp = datetime.strptime(timestamp, "%Y-%m-%d_%H-%M-%S")
                         cur_feat['timestamp'] = timestamp
 
                         features.append(cur_feat)
+                print(feature_file)
+            num += 1
+            print('{}/{}'.format(num, len(valid_users)))
+    for user_folder in os.listdir(features_filenames[1]):
+        features_folder = '{}{}/features'.format(features_filenames[1], user_folder)
+        user_id = features_folder.split('/')[-2]
+        if (int(user_id) + 200) in valid_users:
+            print((int(user_id) + 200))
+            for feature_file in os.listdir(features_folder):
+                cur_feat = pd.read_csv('{}/{}'.format(features_folder, feature_file))
+                if (cur_feat.shape[0] == 1):
+                    if not pd.isna(cur_feat['FaceRectX'].item()):
+                        cur_feat['user'] = (int(user_id) + 200)
+                        timestamp = cur_feat['input'].item()[-23:-4]
+                        timestamp = datetime.strptime(timestamp, "%Y-%m-%d_%H-%M-%S")
+                        cur_feat['timestamp'] = timestamp
+
+                        features.append(cur_feat)
+                print(feature_file)
             num += 1
             print('{}/{}'.format(num, len(valid_users)))
     features_tab = pd.concat(features)
@@ -174,7 +242,7 @@ def compile_data(contextual, facial):
     data = contextual
     data['facial'] = ""
     for row_ind in range(data.shape[0]):
-        feature = facial.loc[(facial['user'] == str(data.iloc[row_ind]['user'])) &
+        feature = facial.loc[(facial['user'] == data.iloc[row_ind]['user']) &
                     (facial['timestamp'] >= data.iloc[row_ind]['start_time']) & 
                     (facial['timestamp'] <= data.iloc[row_ind]['end_time'])]
         data['facial'].iloc[row_ind] = feature
@@ -252,16 +320,16 @@ if __name__ == '__main__':
     
     valid_users = set(contextual.user.to_list())
     # facial = read_facial(valid_users)
-    # filehandler = open('data/study2_facial.pkl',"wb")
+    # filehandler = open('data/study2_facial_all.pkl',"wb")
     # pkl.dump(facial,filehandler)
     # filehandler.close()
-    file = open("data/study2_facial.pkl",'rb')
+    file = open("data/study2_facial_all.pkl",'rb')
     facial = pkl.load(file)
     file.close()
-
+    
     data = compile_data(contextual, facial)
     features, labels = calculate_features(data)
-    filehandler = open('data/study2_data.pkl',"wb")
+    filehandler = open('data/study2_data_all.pkl',"wb")
     pkl.dump({'features': features, 'labels': labels},filehandler)
     filehandler.close()
 
