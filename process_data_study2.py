@@ -295,7 +295,9 @@ def calculate_features(data):
         filename = data.iloc[row_ind]['facial']['input']
         timestamp = filename.apply(lambda x: x[-23:-4])
         timestamp.apply(lambda x: datetime.strptime(x, "%Y-%m-%d_%H-%M-%S"))
-        features = data.iloc[row_ind]['facial'][['AU04', 'AU07', 'AU12', 'AU25', 'AU26', 
+        # features = data.iloc[row_ind]['facial'][['AU04', 'AU07', 'AU12', 'AU25', 'AU26', 
+        #                                         'anger', 'disgust', 'fear', 'happiness', 'sadness', 'surprise', 'neutral']]
+        features = data.iloc[row_ind]['facial'][['AU01', 'AU02', 'AU04', 'AU05', 'AU06', 'AU07', 'AU09', 'AU10', 'AU11', 'AU12', 'AU14', 'AU15', 'AU17', 'AU20', 'AU23', 'AU24', 'AU25', 'AU26', 
                                                 'anger', 'disgust', 'fear', 'happiness', 'sadness', 'surprise', 'neutral']]
         # features['timestamp'] = timestamp
         features['user'] = user
@@ -329,7 +331,7 @@ if __name__ == '__main__':
     
     data = compile_data(contextual, facial)
     features, labels = calculate_features(data)
-    filehandler = open('data/study2_data_all.pkl',"wb")
+    filehandler = open('data/study2_data_all_2.pkl',"wb")
     pkl.dump({'features': features, 'labels': labels},filehandler)
     filehandler.close()
 

@@ -5,17 +5,22 @@ import matplotlib.pyplot as plt
 import pickle as pkl
 import matplotlib.cm as cm
 
-def create_hyp(name):
-    blank_hyp = np.zeros((2, 2, 4, 3))
-    if name == 'EASY':
+
+num_iter = 160
+card_num = 10
+blank_hyp = np.zeros((2, 2, 4, 3))
+perfect_acc = np.zeros((2, num_iter, 8))
+for difficulty_num, difficulty in enumerate(['EASY', 'DIFFICULT']):
+
+    if difficulty == 'EASY':
         #Easy - diamonds on left, all others on right
         true_hyp = np.copy(blank_hyp)
         true_hyp[0, 0, 2, 0] = 1
         true_hyp[1, 0, 2, 1] = 1
         true_hyp[1, 1, 2, 2] = 1
-
-       
-    elif name == 'DIFFICULT':
+        card_order = [54, 60, 48, 47, 10, 58, 14, 18, 57, 32]
+    else:
+        card_order = [61, 34, 33, 32, 42, 17, 68, 29, 26, 45]
         #Difficulty - green-one, red/purple on left, green two/three on right
         true_hyp = np.copy(blank_hyp)
         true_hyp[0, 0, 0, 1] = 1 #green
@@ -27,54 +32,23 @@ def create_hyp(name):
         true_hyp[1, 0, 3, 1] = 1 #two
         true_hyp[1, 0, 3, 2] = 1 #three
 
-    return true_hyp
 
-difficulty = 'DIFFICULT'
-num_iter = 100
-true_hyp = create_hyp(difficulty)
-card_num = 10
+    for ind in range(num_iter):
+        acc, hyp_diff = learner_model(card_order, true_hyp)
+        perfect_acc[difficulty_num, ind,:] = acc
+        print(ind)
 
-# frac_staggered = 0
-# num_staggered = np.floor(frac_staggered*num_iter)
+perfect_avg = np.mean(perfect_acc, axis=1)
+perfect_std = np.std(perfect_acc, axis=1)
 
-# card_order, num_hypotheses_arr, equiv_cards_arr = create_card_order(card_num, true_hyp, staggered=False)
-# if difficulty == 'EASY':
-#     card_order = [54, 60, 48, 47, 10, 58, 14, 18, 57, 32]
-# else:
-#     card_ordre = [61, 34, 33, 32, 42, 17, 68, 29, 26, 45]
-
-
-# perfect_acc = np.zeros((num_iter, 8))
-# perfect_hyp_diff = np.zeros((num_iter, 2, 8))
-# for ind in range(num_iter):
-#     if ind < num_staggered:
-#         staggered = True
-#     else:
-#         staggered = False
-
-#     acc, hyp_diff = learner_model(card_order, true_hyp, difficulty_adjustment=False, prop_weights=False, staggered=staggered)
-    
-#     perfect_acc[ind,:] = acc
-#     perfect_hyp_diff[ind, :, :] = hyp_diff
-
-# perfect_avg = np.mean(perfect_acc, axis=0)
-# perfect_std = np.std(perfect_acc, axis=0)
-# perfect_hyp_avg = np.mean(perfect_hyp_diff, axis=0)
-# perfect_hyp_std = np.std(perfect_hyp_diff, axis=0)
-# print(perfect_avg)
-# print(card_order)
-
-
-# ax[0].errorbar(np.arange(8), perfect_avg, yerr=perfect_std, label='Learner Model - {} Staggered'.format(frac_staggered))
-# ax[1].errorbar(np.arange(8), perfect_hyp_avg[0,:], yerr=perfect_hyp_std[0,:], label='Easy Remaining {} Staggered'.format(frac_staggered))
-# ax[1].errorbar(np.arange(8), perfect_hyp_avg[1,:], yerr=perfect_hyp_std[1,:], label='Difficult Remaining {} Staggered'.format(frac_staggered))
-# ax[0].set_title(difficulty)
-
-# ax[1].set_ylabel('Remaining Hypotheses')
-
+print(perfect_avg)
 plt.rcParams['font.size'] = 16
-
 fig, ax = plt.subplots(2, 1, sharex=True, sharey=True)
+
+ax[0].errorbar(np.arange(8), perfect_avg[0, :], yerr=perfect_std[0, :], label='Learner Model')
+ax[1].errorbar(np.arange(8), perfect_avg[1, :], yerr=perfect_std[1,:], label='Learner Model')
+
+
 ax[0].set_ylabel('Accuracy')
 ax[1].set_ylabel('Accuracy')
 
@@ -83,14 +57,18 @@ data = pkl.load(file)
 file.close()
 
 human_acc = np.vstack(data.loc[(data['difficulty'] == 'EASY'), 'answers'].to_numpy())
+print(human_acc.shape)
 human_avg = np.mean(human_acc,axis=0)
 human_std = np.std(human_acc,axis=0)
 ax[0].errorbar(np.arange(8), human_avg, yerr= human_std,label='Human Learner', color='deeppink')
 
 human_acc = np.vstack(data.loc[(data['difficulty'] == 'DIFFICULT'), 'answers'].to_numpy())
+print(human_acc.shape)
 human_avg = np.mean(human_acc,axis=0)
 human_std = np.std(human_acc,axis=0)
 ax[1].errorbar(np.arange(8), human_avg, yerr= human_std,label='Human Learner', color='deeppink')
 
+ax[0].legend()
+ax[1].legend()
 plt.show()
 

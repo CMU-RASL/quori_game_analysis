@@ -232,7 +232,7 @@ def create_card_order(card_num, true_hyp, staggered=False):
 
     return card_order, num_hypotheses_arr, equiv_cards_arr
 
-def learner_model(card_order, true_hyp, difficulty_adjustment=False, prop_weights=False, staggered=False):
+def learner_model(card_order, true_hyp):
     
     all_hyp = create_all_hypotheses()
     cards = create_all_cards()
@@ -245,7 +245,7 @@ def learner_model(card_order, true_hyp, difficulty_adjustment=False, prop_weight
 
     for card_num in range(num_demos):
         for hyp_ind in np.arange(len(hyp_valid)):
-            if staggered and np.sum(hyp_valid[:24]) > 0 and hyp_ind >= 24:
+            if np.sum(hyp_valid[:24]) > 0 and hyp_ind >= 24:
                 pass
             else:
                 if hyp_valid[hyp_ind]:
@@ -264,7 +264,7 @@ def learner_model(card_order, true_hyp, difficulty_adjustment=False, prop_weight
         corr_arr = []
         p_arr = []
         for hyp_ind in np.arange(len(hyp_valid)):
-            if staggered and np.sum(hyp_valid[:24]) > 0 and hyp_ind >= 24: #Skip hypotheses that are difficult if staggered and all easy have not been eliminated
+            if np.sum(hyp_valid[:24]) > 0 and hyp_ind >= 24: #Skip hypotheses that are difficult if staggered and all easy have not been eliminated
                 pass
             else:
                 if hyp_valid[hyp_ind]:
@@ -276,14 +276,6 @@ def learner_model(card_order, true_hyp, difficulty_adjustment=False, prop_weight
 
                     p_arr.append(1)
 
-                    if difficulty_adjustment and np.sum(all_hyp[hyp_ind][:, 1, :, :]) == 0: #easy hypothesis weighed more
-                        p_arr[-1] += difficulty_adjustment
-                    
-                    #color, shading, shape, number
-                    for prop in range(4):
-                        if prop in props_matched and prop_weights:
-                            p_arr[-1] += prop_weights[prop]
-                    
                     #Difficulty
                     if np.sum(all_hyp[hyp_ind][:, 1, :, :]) == 0:
                         hyp_diff[0, card_num] += 1
