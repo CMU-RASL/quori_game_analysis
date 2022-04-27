@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from statsmodels.stats.multicomp import pairwise_tukeyhsd
 from pingouin import mixed_anova
+from statsmodels.graphics.api import interaction_plot
 
 def two_way_anova(data, col_name, title):
     fig, ax = plt.subplots(figsize=(3,4))
@@ -47,24 +48,6 @@ def two_way_anova(data, col_name, title):
         ax.set_ylim([-2, 10])
     elif col_name == 'accuracy':
         ax.set_ylim([-0.2, 1.2])
-    # plt.show()
-
-    # model = ols(col_name + ' ~ C(difficulty) + C(nonverbal) + C(difficulty):C(nonverbal)', data=data).fit()
-    # anova_table = sm.stats.anova_lm(model, type=2)
-
-    # mse = anova_table['sum_sq'][-1]/anova_table['df'][-1]
-    # anova_table['omega_sq'] = 'NaN'
-    # anova_table['omega_sq'] = (anova_table[:-1]['sum_sq']-(anova_table[:-1]['df']*mse))/(sum(anova_table['sum_sq'])+mse)
-    # anova_table['0.05 level'] = 'NaN'
-    # anova_table.loc[anova_table["PR(>F)"] <= 0.05, "0.05 level"] = 'Significant'
-    # anova_table['0.01 level'] = 'NaN'
-    # anova_table.loc[anova_table["PR(>F)"] <= 0.01, "0.01 level"] = 'Significant'
-    # anova_table['0.001 level'] = 'NaN'
-    # anova_table.loc[anova_table["PR(>F)"] <= 0.001, "0.001 level"] = 'Significant'
-    # print('---')
-    # print(col_name)
-    # print(anova_table)
-    # print('---')
 
     aov = mixed_anova(dv=col_name, between='nonverbal',
                   within='difficulty', subject='user_id', data=data)
@@ -88,6 +71,10 @@ def posthoc(data, col_name):
     print(col_name)
     print(tukey_data)
     print('---')
+
+    fig, ax = plt.subplots()
+    interaction_plot(data['difficulty'], data['nonverbal'], data['accuracy'], ax=ax)
+    plt.show()
 
 def sorted_feedback(data):
     difficulty = ['EASY', 'DIFFICULT']
@@ -167,7 +154,7 @@ if __name__ == "__main__":
     file = open("data/study1b_data.pkl",'rb')
     study1b = pkl.load(file)
     file.close()
-    study1b['nonverbal'] = study1b['nonverbal'].map({'NONVERBAL': 'NONMATCHING', 'NEUTRAL': 'NEUTRAL2'})
+    study1b['nonverbal'] = study1b['nonverbal'].map({'NONVERBAL': 'NONMATCHING', 'NEUTRAL': 'NEUTRAL'})
     study1b['user_id'] = study1b['user_id'] + 1000
 
     file = open("data/study1c_data.pkl",'rb')
@@ -183,12 +170,13 @@ if __name__ == "__main__":
     # data = data.loc[data['nonverbal'] != 'MATCHING']
     # data = data.loc[data['nonverbal'] != 'NONMATCHING']
     # print(data)
-    # two_way_anova(data, 'accuracy', 'Accuracy')
+    two_way_anova(data, 'accuracy', 'Accuracy')
     # two_way_anova(data, 'user_learning', 'User Learning')
-    two_way_anova(data, 'perceived_difficulty', 'Perceived Difficulty')
+    # two_way_anova(data, 'perceived_difficulty', 'Perceived Difficulty')
     # two_way_anova(data, 'engagement', 'Engagement')
     # two_way_anova(data, 'animacy', 'Animacy')
     # two_way_anova(data, 'intelligence', 'Intelligence')
-    # posthoc(data, 'user_learning')
+    # posthoc(data, 'accuracy')
     # sorted_feedback(data)
+    plt.show()
      

@@ -398,7 +398,7 @@ def epochs(train_X, train_Y, test_X, test_Y, model_type, special_value):
     plot_acc(num_epochs_arr, all_test_conf, 'Test Data - Number of Epochs with Num Hidden Units {} - {}'.format(num_hidden_units, model_type))
 
 if __name__ == '__main__':
-    file = open("data/study2_data_all.pkl",'rb')
+    file = open("data/study2_data_all_3_incorrect.pkl",'rb')
     data = pkl.load(file)
     file.close()
 

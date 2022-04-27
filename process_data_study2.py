@@ -286,6 +286,14 @@ def calculate_features(data):
         if pd.isna(prev_performance):
             prev_performance = 0.5
         
+        #Accuracy for current Trial
+        current_answer = data.loc[(data['user'] == user) &
+                                        (data['round'] == round) &
+                                        (data['trial'] == trial_raw), ['trial', 'answer']]
+        current_performance = current_answer['answer'].mean()
+        if pd.isna(current_performance):
+            current_performance = 0.5
+        
         #Labels
         correct = data.iloc[row_ind]['answer']
 
@@ -307,12 +315,14 @@ def calculate_features(data):
         features['performance'] = performance
         features['prev_performance'] = prev_performance
         features['perfect_prob'] = perfect_prob
-        
+        features['current_performance'] = current_performance
+
         labels = pd.DataFrame.from_dict({'correct': data.iloc[row_ind]['facial'].shape[0]*[correct], 'confidence': data.iloc[row_ind]['facial'].shape[0]*[confidence]})
         
         if features.shape[0] > 0:
-            features_arr.append(features)
-            labels_arr.append(labels)
+            if current_performance == 0:
+                features_arr.append(features)
+                labels_arr.append(labels)
 
     return features_arr, labels_arr
 
@@ -331,7 +341,8 @@ if __name__ == '__main__':
     
     data = compile_data(contextual, facial)
     features, labels = calculate_features(data)
-    filehandler = open('data/study2_data_all_2.pkl',"wb")
+    print(len(features))
+    filehandler = open('data/study2_data_all_3_incorrect.pkl',"wb")
     pkl.dump({'features': features, 'labels': labels},filehandler)
     filehandler.close()
 

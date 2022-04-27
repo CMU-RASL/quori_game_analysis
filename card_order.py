@@ -47,8 +47,16 @@ def create_specific_hypothesis(difficulty):
     return true_hyp
 
 def create_all_hypotheses():
+    file = open("data/hypotheses.pkl",'rb')
+    data = pkl.load(file)
+    file.close()
+    return data['hyp'], data['diff']
+
     all_hyp = []
     diff_arr = []
+    all_cards = create_all_cards()
+    all_left_bin = []
+
     # #Easy hypotheses
     # for prop1 in range(4): #pick property the rule is defined over
     #     for prop1val in range(3): #pick the value of that property that belongs by itself
@@ -84,6 +92,7 @@ def create_all_hypotheses():
                         
                         for bins in zip([0, 1], [1, 0]):
                             #1-1/2-1, 1-1/2-2, 1-1/2-3, 1-2, 1-3
+                            #red/oval, red/squiggle, red/diamond, green, purple
                             #Those are the pairings we have, and each can belong in either bin0 or bin1
                             #This includes easy rules, so we don't need to add those separately
                             for comb1 in range(2):
@@ -109,12 +118,6 @@ def create_all_hypotheses():
                                                 hyp[bins[comb3], current_row[bins[comb3]], prop2, prop2val3] = 1
                                                 current_row[bins[comb3]]+=1
 
-                                                #Is an easy rule if 1-1/2-1, 1-1/2-2, 1-1/2-3 all belong in same bin
-                                                if (bins[comb1] == bins[comb2]) and (bins[comb2]== bins[comb3]):
-                                                    diff_arr.append(0)
-                                                else:
-                                                    diff_arr.append(1)
-
                                                 #1-2
                                                 hyp[bins[comb4], current_row[bins[comb4]], prop1, prop1val2] = 1
                                                 current_row[bins[comb4]]+=1
@@ -123,7 +126,28 @@ def create_all_hypotheses():
                                                 hyp[bins[comb5], current_row[bins[comb5]], prop1, prop1val3] = 1
                                                 current_row[bins[comb5]]+=1
 
-                                                all_hyp.append(hyp)
+                                                #Check if already exists
+                                                left = []
+                                                for card_ind, card in enumerate(all_cards):
+                                                    if sort_card(hyp, card) == 0:
+                                                        left.append(card_ind)
+                                                left = set(left)
+
+                                                duplicate = False
+                                                for test_left in all_left_bin:
+                                                    if left == test_left:
+                                                        duplicate = True
+                                                        break
+                                                
+                                                if not duplicate:
+                                                    #Is an easy rule if 1-1/2-1, 1-1/2-2, 1-1/2-3 all belong in same bin
+                                                    if (bins[comb1] == bins[comb2]) and (bins[comb2]== bins[comb3]):
+                                                        diff_arr.append(0)
+                                                    else:
+                                                        diff_arr.append(1)
+
+                                                    all_hyp.append(hyp)
+                                                    all_left_bin.append(left)
 
     return all_hyp, diff_arr
 
@@ -305,6 +329,10 @@ def plot_human_comparison():
 
     easy_card_order = [54, 60, 48, 47, 10, 58, 14, 18, 57, 32]
     difficult_card_order = [61, 34, 33, 32, 42, 17, 68, 29, 26, 45]
+
+    # easy_card_order = [52, 46, 66, 43, 76, 11,  8, 80, 67, 51]
+    # difficult_card_order = [37, 36,  1, 70, 32, 56, 31, 13, 34, 12]
+
     card_orders = [easy_card_order, difficult_card_order]
     card_num = 10
     
@@ -352,5 +380,14 @@ def plot_human_comparison():
     plt.show()
 
 plot_human_comparison()
+# all_hyp, diff_arr = create_all_hypotheses()
+# filehandler = open('data/hypotheses.pkl',"wb")
+# pkl.dump({'hyp': all_hyp, 'diff': diff_arr},filehandler)
+# filehandler.close()
+
+# print(create_card_order(create_specific_hypothesis('EASY'), 10))
+# print(create_card_order(create_specific_hypothesis('DIFFICULT'), 10))
+
+
 
 
