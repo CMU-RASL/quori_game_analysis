@@ -250,8 +250,8 @@ def regress_to_class(val):
 
 def single_run(train_X, train_Y, test_X, test_Y, model_type, special_value):
     num_components = 6
-    num_epochs = 100
-    num_hidden_units = 110
+    num_epochs = 10
+    num_hidden_units = 70
 
     train_confusion = np.zeros((3,3))
     test_confusion = np.zeros((3,3))
@@ -330,7 +330,7 @@ def components(train_X, train_Y, test_X, test_Y, model_type):
 
 def hidden_units(train_X, train_Y, test_X, test_Y, model_type, special_value):
     num_components = 3
-    num_epochs = 80
+    num_epochs = 10
     num_hidden_units_arr = [70, 80, 90, 100, 110, 120]
     
     all_train_conf = []

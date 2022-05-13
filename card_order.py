@@ -46,11 +46,12 @@ def create_specific_hypothesis(difficulty):
         true_hyp[1, 1, 3, 2] = 1 #three
     return true_hyp
 
-def create_all_hypotheses():
-    file = open("data/hypotheses.pkl",'rb')
-    data = pkl.load(file)
-    file.close()
-    return data['hyp'], data['diff']
+def create_all_hypotheses(reset=False):
+    if not reset:
+        file = open("data/hypotheses.pkl",'rb')
+        data = pkl.load(file)
+        file.close()
+        return data['hyp'], data['diff']
 
     all_hyp = []
     diff_arr = []
@@ -148,6 +149,8 @@ def create_all_hypotheses():
 
                                                     all_hyp.append(hyp)
                                                     all_left_bin.append(left)
+                                                    
+                                                        
 
     return all_hyp, diff_arr
 
@@ -187,6 +190,7 @@ def sort_card(hyp, card):
                         
                 if match:
                     return bin
+    print('ERROR IN SORTING')
 
 def calc_hyp_removed(all_hyp, hyp_valid, true_hyp, test_card):
     true_bin, props_matched = sort_card(true_hyp, test_card)
@@ -226,34 +230,37 @@ def learner_model(true_hyp, card_order):
             if hyp_valid[hyp_ind] == 1:
                 if is_hyp_removed(true_hyp, cards[card_order[card_num]], hyp):
                     hyp_valid[hyp_ind] = 0
-    
+        
     #Trials
     for card_num in range(num_demos, num_cards):
         #Sorting Stage
 
         #Get all hypotheses that are easy and have not been eliminated
         cur_hyp_ind = np.where((hyp_valid == 1) & (diff_arr == 0))[0]
-        
+
         #If there are no easy hyp remaining, add in difficult
         if len(cur_hyp_ind) == 0:
             cur_hyp_ind = np.where((hyp_valid == 1))[0]
 
         hyp_remain_arr[card_num - num_demos] = len(cur_hyp_ind)
+        
         #Pick a random hypothesis out of the set
         chosen_hyp = np.random.choice(cur_hyp_ind, 1)[0]
 
         #Sort based on that hyp
         chosen_bin = sort_card(hypotheses[chosen_hyp], cards[card_order[card_num]])
 
+        # print_hyp(hypotheses[chosen_hyp])
+        # print(chosen_bin, sort_card(true_hyp, cards[card_order[card_num]]))
         #Record whether correct or not
         acc_arr[card_num - num_demos] = (chosen_bin == sort_card(true_hyp, cards[card_order[card_num]]))
-
+        
         #Elimination Stage
         for hyp_ind, hyp in enumerate(hypotheses):
             if hyp_valid[hyp_ind] == 1:
                 if is_hyp_removed(true_hyp, cards[card_order[card_num]], hyp):
                     hyp_valid[hyp_ind] = 0
-    
+
     return acc_arr
 
 def create_card_order(true_hyp, num_cards):
@@ -336,7 +343,7 @@ def plot_human_comparison():
     card_orders = [easy_card_order, difficult_card_order]
     card_num = 10
     
-    num_iter = 80
+    num_iter = 1
     
     learner_acc = np.zeros((2, num_iter, 8))
     for difficulty_num, difficulty in enumerate(['EASY', 'DIFFICULT']):
@@ -354,7 +361,6 @@ def plot_human_comparison():
 
     ax[0].errorbar(np.arange(8), learner_avg[0, :], yerr=learner_std[0, :], label='Learner Model')
     ax[1].errorbar(np.arange(8), learner_avg[1, :], yerr=learner_std[1,:], label='Learner Model')
-
 
     ax[0].set_ylabel('Accuracy')
     ax[1].set_ylabel('Accuracy')
@@ -379,14 +385,17 @@ def plot_human_comparison():
     ax[1].legend()
     plt.show()
 
-plot_human_comparison()
-# all_hyp, diff_arr = create_all_hypotheses()
+# plot_human_comparison()
+# all_hyp, diff_arr = create_all_hypotheses(reset=True)
 # filehandler = open('data/hypotheses.pkl',"wb")
 # pkl.dump({'hyp': all_hyp, 'diff': diff_arr},filehandler)
 # filehandler.close()
 
 # print(create_card_order(create_specific_hypothesis('EASY'), 10))
 # print(create_card_order(create_specific_hypothesis('DIFFICULT'), 10))
+true_hyp = create_specific_hypothesis('DIFFICULT')
+difficult_card_order = [61, 34, 33, 32, 42, 17, 68, 29, 26, 45]
+learner_model(true_hyp, difficult_card_order)
 
 
 
