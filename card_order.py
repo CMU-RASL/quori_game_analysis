@@ -6,7 +6,7 @@ def create_blank_hyp():
     #Indexed by: bin, row, property, value
     #props = [['red', 'green', 'purple'],['open', 'striped', 'solid'],['diamond', 'oval', 'squiggle'],['one', 'two', 'three']]
 
-    blank_hyp = np.zeros((2, 6, 4, 3))
+    blank_hyp = np.zeros((2, 10, 4, 3))
     return blank_hyp
 
 def create_all_cards():
@@ -58,27 +58,49 @@ def create_all_hypotheses(reset=False):
     all_cards = create_all_cards()
     all_left_bin = []
 
-    # #Easy hypotheses
-    # for prop1 in range(4): #pick property the rule is defined over
-    #     for prop1val in range(3): #pick the value of that property that belongs by itself
+    #0 exceptions (Easy)
+    for prop1 in range(4): #pick property the rule is defined over
+        for prop1val in range(3): #pick the value of that property that belongs by itself
 
-    #         #Get the properties that belong together
-    #         other_prop1vals = [0, 1, 2]
-    #         other_prop1vals.remove(prop1val) 
+            #Get the properties that belong together
+            other_prop1vals = [0, 1, 2]
+            other_prop1vals.remove(prop1val) 
             
-    #         for bin0, bin1 in zip([0, 1], [1, 0]):
-    #             #One in bin0 and two in bin1
-    #             hyp = create_blank_hyp()
-    #             hyp[bin0, 0, prop1, prop1val] = 1
-    #             hyp[bin1, 0, prop1, other_prop1vals[0]] = 1
-    #             hyp[bin1, 1, prop1, other_prop1vals[1]] = 1
-    #             all_hyp.append(hyp)
-    
-    #Difficult Hypotheses
+            for bin0, bin1 in zip([0, 1], [1, 0]):
+                #One in bin0 and two in bin1
+                hyp = create_blank_hyp()
+                hyp[bin0, 0, prop1, prop1val] = 1
+                hyp[bin1, 0, prop1, other_prop1vals[0]] = 1
+                hyp[bin1, 1, prop1, other_prop1vals[1]] = 1
+
+                #Check if already exists
+                left = []
+                for card_ind, card in enumerate(all_cards):
+                    if sort_card(hyp, card) == 0:
+                        left.append(card_ind)
+                left = set(left)
+
+                duplicate = False
+                for test_left in all_left_bin:
+                    if left == test_left:
+                        duplicate = True
+                        break
+
+                if not duplicate:
+                    all_hyp.append(hyp)
+                    all_left_bin.append(left)
+                    diff_arr.append(0)
+
+    print('0 Exceptions Complete')
+    props = [['red', 'green', 'purple'],['open', 'striped', 'solid'],['diamond', 'oval', 'squiggle'],['one', 'two', 'three']]
+    #1 Exception - Difficult
+    #1-1/2-1, 1-1/2-2, 1-1/2-3, 1-2, 1-3
+    #red/oval, red/squiggle, red/diamond, green, purple
+    #Those are the pairings we have, and each can belong in either bin0 or bin1
     for prop1 in range(4):
         for prop2 in range(4):
             if not (prop1 == prop2): #Ensures we get two different properties
-
+                print(prop1, prop2)
                 for prop1val1 in range(3):
                     other_prop1vals = [0, 1, 2]
                     other_prop1vals.remove(prop1val1)
@@ -90,17 +112,14 @@ def create_all_hypotheses(reset=False):
                         other_prop2vals.remove(prop2val1)
                         prop2val2 = other_prop2vals[0]
                         prop2val3 = other_prop2vals[1]
-                        
+                        print('--Property 1', props[prop1][prop1val1], 'Property 2', props[prop2][prop2val1] )
                         for bins in zip([0, 1], [1, 0]):
-                            #1-1/2-1, 1-1/2-2, 1-1/2-3, 1-2, 1-3
-                            #red/oval, red/squiggle, red/diamond, green, purple
-                            #Those are the pairings we have, and each can belong in either bin0 or bin1
-                            #This includes easy rules, so we don't need to add those separately
                             for comb1 in range(2):
                                 for comb2 in range(2):
                                     for comb3 in range(2):
                                         for comb4 in range(2):
                                             for comb5 in range(2):
+                                                
                                                 hyp = create_blank_hyp()
                                                 current_row = [0, 0]
 
@@ -141,17 +160,193 @@ def create_all_hypotheses(reset=False):
                                                         break
                                                 
                                                 if not duplicate:
-                                                    #Is an easy rule if 1-1/2-1, 1-1/2-2, 1-1/2-3 all belong in same bin
-                                                    if (bins[comb1] == bins[comb2]) and (bins[comb2]== bins[comb3]):
-                                                        diff_arr.append(0)
-                                                    else:
-                                                        diff_arr.append(1)
-
+                                                    diff_arr.append(1)
                                                     all_hyp.append(hyp)
                                                     all_left_bin.append(left)
-                                                    
-                                                        
+                            print('----Half of One Exceptions Complete')
+                        print('----One Exceptions Complete')
+    #2 Exception - Difficult
+    #1-1/2-1, 1-1/2-2, 1-1/2-3, 1-2/2-1, 1-2/2-2, 1-2/2-3, 1-3
+    #red/oval, red/squiggle, red/diamond, green/oval, green/squiggle, green/diamond, purple
+    #Those are the pairings we have, and each can belong in either bin0 or bin1
+    for prop1 in range(4):
+        for prop2 in range(4):
+            if not (prop1 == prop2): #Ensures we get two different properties
+                print(prop1, prop2)
+                for prop1val1 in range(3):
+                    other_prop1vals = [0, 1, 2]
+                    other_prop1vals.remove(prop1val1)
+                    prop1val2 = other_prop1vals[0]
+                    prop1val3 = other_prop1vals[1]
 
+                    for prop2val1 in range(3):
+                        other_prop2vals = [0, 1, 2]
+                        other_prop2vals.remove(prop2val1)
+                        prop2val2 = other_prop2vals[0]
+                        prop2val3 = other_prop2vals[1]
+                        print('--Property 1', props[prop1][prop1val1], 'Property 2', props[prop2][prop2val1] )
+                        for bins in zip([0, 1], [1, 0]):                      
+                            for comb1 in range(2):
+                                for comb2 in range(2):
+                                    for comb3 in range(2):
+                                        for comb4 in range(2):
+                                            for comb5 in range(2):
+                                                for comb6 in range(2):
+                                                    for comb7 in range(2):
+                                                        hyp = create_blank_hyp()
+                                                        current_row = [0, 0]
+
+                                                        #1-1/2-1
+                                                        hyp[bins[comb1], current_row[bins[comb1]], prop1, prop1val1] = 1
+                                                        hyp[bins[comb1], current_row[bins[comb1]], prop2, prop2val1] = 1
+                                                        current_row[bins[comb1]]+=1
+
+                                                        #1-1/2-2
+                                                        hyp[bins[comb2], current_row[bins[comb2]], prop1, prop1val1] = 1
+                                                        hyp[bins[comb2], current_row[bins[comb2]], prop2, prop2val2] = 1
+                                                        current_row[bins[comb2]]+=1
+
+                                                        #1-1/2-3
+                                                        hyp[bins[comb3], current_row[bins[comb3]], prop1, prop1val1] = 1
+                                                        hyp[bins[comb3], current_row[bins[comb3]], prop2, prop2val3] = 1
+                                                        current_row[bins[comb3]]+=1
+
+                                                        #1-2/2-1
+                                                        hyp[bins[comb4], current_row[bins[comb4]], prop1, prop1val2] = 1
+                                                        hyp[bins[comb4], current_row[bins[comb4]], prop2, prop2val1] = 1
+                                                        current_row[bins[comb4]]+=1
+
+                                                        #1-2/2-2
+                                                        hyp[bins[comb5], current_row[bins[comb5]], prop1, prop1val2] = 1
+                                                        hyp[bins[comb5], current_row[bins[comb5]], prop2, prop2val2] = 1
+                                                        current_row[bins[comb5]]+=1
+
+                                                        #1-2/2-3
+                                                        hyp[bins[comb6], current_row[bins[comb6]], prop1, prop1val2] = 1
+                                                        hyp[bins[comb6], current_row[bins[comb6]], prop2, prop2val3] = 1
+                                                        current_row[bins[comb6]]+=1
+
+                                                        #1-3
+                                                        hyp[bins[comb7], current_row[bins[comb7]], prop1, prop1val3] = 1
+                                                        current_row[bins[comb7]]+=1
+
+                                                        #Check if already exists
+                                                        left = []
+                                                        for card_ind, card in enumerate(all_cards):
+                                                            if sort_card(hyp, card) == 0:
+                                                                left.append(card_ind)
+                                                        left = set(left)
+
+                                                        duplicate = False
+                                                        for test_left in all_left_bin:
+                                                            if left == test_left:
+                                                                duplicate = True
+                                                                break
+                                                        
+                                                        if not duplicate:
+                                                            diff_arr.append(2)
+                                                            all_hyp.append(hyp)
+                                                            all_left_bin.append(left)
+                            print('----Half of Two Exceptions Complete')
+                        print('----Two Exceptions Complete')
+    #3 Exception - Difficult
+    #1-1/2-1, 1-1/2-2, 1-1/2-3, 1-2/2-1, 1-2/2-2, 1-2/2-3, 1-3/2-1, 1-3/2-2, 1-3/2-3
+    #red/oval, red/squiggle, red/diamond, green/oval, green/squiggle, green/diamond, purple/oval, purple/squiggle, purple/diamond
+    #Those are the pairings we have, and each can belong in either bin0 or bin1   
+    for prop1 in range(4):
+        for prop2 in range(4):
+            if not (prop1 == prop2): #Ensures we get two different properties
+                print(prop1, prop2)
+                for prop1val1 in range(3):
+                    other_prop1vals = [0, 1, 2]
+                    other_prop1vals.remove(prop1val1)
+                    prop1val2 = other_prop1vals[0]
+                    prop1val3 = other_prop1vals[1]
+
+                    for prop2val1 in range(3):
+                        other_prop2vals = [0, 1, 2]
+                        other_prop2vals.remove(prop2val1)
+                        prop2val2 = other_prop2vals[0]
+                        prop2val3 = other_prop2vals[1]
+                        print('--Property 1', props[prop1][prop1val1], 'Property 2', props[prop2][prop2val1] )
+                        for bins in zip([0, 1], [1, 0]):                        
+                            for comb1 in range(2):
+                                for comb2 in range(2):
+                                    for comb3 in range(2):
+                                        for comb4 in range(2):
+                                            for comb5 in range(2):
+                                                for comb6 in range(2):
+                                                    for comb7 in range(2):
+                                                        for comb8 in range(2):
+                                                            for comb9 in range(2):
+
+                                                                hyp = create_blank_hyp()
+                                                                current_row = [0, 0]
+
+                                                                #1-1/2-1
+                                                                hyp[bins[comb1], current_row[bins[comb1]], prop1, prop1val1] = 1
+                                                                hyp[bins[comb1], current_row[bins[comb1]], prop2, prop2val1] = 1
+                                                                current_row[bins[comb1]]+=1
+
+                                                                #1-1/2-2
+                                                                hyp[bins[comb2], current_row[bins[comb2]], prop1, prop1val1] = 1
+                                                                hyp[bins[comb2], current_row[bins[comb2]], prop2, prop2val2] = 1
+                                                                current_row[bins[comb2]]+=1
+
+                                                                #1-1/2-3
+                                                                hyp[bins[comb3], current_row[bins[comb3]], prop1, prop1val1] = 1
+                                                                hyp[bins[comb3], current_row[bins[comb3]], prop2, prop2val3] = 1
+                                                                current_row[bins[comb3]]+=1
+
+                                                                #1-2/2-1
+                                                                hyp[bins[comb4], current_row[bins[comb4]], prop1, prop1val2] = 1
+                                                                hyp[bins[comb4], current_row[bins[comb4]], prop2, prop2val1] = 1
+                                                                current_row[bins[comb4]]+=1
+
+                                                                #1-2/2-2
+                                                                hyp[bins[comb5], current_row[bins[comb5]], prop1, prop1val2] = 1
+                                                                hyp[bins[comb5], current_row[bins[comb5]], prop2, prop2val2] = 1
+                                                                current_row[bins[comb5]]+=1
+
+                                                                #1-2/2-3
+                                                                hyp[bins[comb6], current_row[bins[comb6]], prop1, prop1val2] = 1
+                                                                hyp[bins[comb6], current_row[bins[comb6]], prop2, prop2val3] = 1
+                                                                current_row[bins[comb6]]+=1
+
+                                                                #1-3/2-1
+                                                                hyp[bins[comb7], current_row[bins[comb7]], prop1, prop1val3] = 1
+                                                                hyp[bins[comb7], current_row[bins[comb7]], prop2, prop2val1] = 1
+                                                                current_row[bins[comb7]]+=1
+
+                                                                #1-3/2-2
+                                                                hyp[bins[comb8], current_row[bins[comb8]], prop1, prop1val3] = 1
+                                                                hyp[bins[comb8], current_row[bins[comb8]], prop2, prop2val2] = 1
+                                                                current_row[bins[comb8]]+=1
+
+                                                                #1-3/2-3
+                                                                hyp[bins[comb9], current_row[bins[comb9]], prop1, prop1val3] = 1
+                                                                hyp[bins[comb9], current_row[bins[comb9]], prop2, prop2val3] = 1
+                                                                current_row[bins[comb9]]+=1
+
+                                                                #Check if already exists
+                                                                left = []
+                                                                for card_ind, card in enumerate(all_cards):
+                                                                    if sort_card(hyp, card) == 0:
+                                                                        left.append(card_ind)
+                                                                left = set(left)
+
+                                                                duplicate = False
+                                                                for test_left in all_left_bin:
+                                                                    if left == test_left:
+                                                                        duplicate = True
+                                                                        break
+                                                                
+                                                                if not duplicate:
+                                                                    diff_arr.append(3)
+                                                                    all_hyp.append(hyp)
+                                                                    all_left_bin.append(left)
+                            print('----Half of Three Exceptions Complete')
+                        print('----Three Exceptions Complete')        
     return all_hyp, diff_arr
 
 def print_hyp(hyp):
@@ -213,7 +408,7 @@ def is_hyp_removed(true_hyp, test_card, test_hyp):
     else:
         return True
 
-def learner_model(true_hyp, card_order):
+def learner_model(true_hyp, card_order, hyp_weights = [1, 1, 0, 0]):
     cards = create_all_cards()
     hypotheses, diff_arr = create_all_hypotheses()
     diff_arr = np.array(diff_arr)
@@ -222,6 +417,7 @@ def learner_model(true_hyp, card_order):
     num_demos = 2
     acc_arr = np.zeros((num_cards - num_demos))
     hyp_remain_arr = np.zeros((num_cards - num_demos))
+    
 
     #Demonstrations
     for card_num in range(num_demos):
@@ -230,11 +426,11 @@ def learner_model(true_hyp, card_order):
             if hyp_valid[hyp_ind] == 1:
                 if is_hyp_removed(true_hyp, cards[card_order[card_num]], hyp):
                     hyp_valid[hyp_ind] = 0
-        
+    
     #Trials
     for card_num in range(num_demos, num_cards):
         #Sorting Stage
-
+        
         #Get all hypotheses that are easy and have not been eliminated
         cur_hyp_ind = np.where((hyp_valid == 1) & (diff_arr == 0))[0]
 
@@ -245,13 +441,17 @@ def learner_model(true_hyp, card_order):
         hyp_remain_arr[card_num - num_demos] = len(cur_hyp_ind)
         
         #Pick a random hypothesis out of the set
-        chosen_hyp = np.random.choice(cur_hyp_ind, 1)[0]
+        weights = [hyp_weights[x] for x in diff_arr[cur_hyp_ind]]
+        # print(cur_hyp_ind)
+        # print(diff_arr[cur_hyp_ind])
+        # print(weights)
+        weights = weights / np.sum(weights)
+        # print(weights)
+        # print('-')
+        chosen_hyp = np.random.choice(cur_hyp_ind, 1, p=weights)[0]
 
         #Sort based on that hyp
         chosen_bin = sort_card(hypotheses[chosen_hyp], cards[card_order[card_num]])
-
-        # print_hyp(hypotheses[chosen_hyp])
-        # print(chosen_bin, sort_card(true_hyp, cards[card_order[card_num]]))
         #Record whether correct or not
         acc_arr[card_num - num_demos] = (chosen_bin == sort_card(true_hyp, cards[card_order[card_num]]))
         
@@ -330,37 +530,40 @@ def create_card_order(true_hyp, num_cards):
                 if is_hyp_removed(true_hyp, current_card, hyp):
                     hyp_valid[hyp_ind] = 0
     
-    return card_order
+    return card_order   
 
 def plot_human_comparison():
+    weight_arrs = [[1, 1, 0, 0], [1, 1, 0.5, 0], [1, 1, 0.5, 0.25]]
+    names = ['1 Exception', '1 and 2 Exceptions', '1, 2, and 3 Exceptions']
 
     easy_card_order = [54, 60, 48, 47, 10, 58, 14, 18, 57, 32]
     difficult_card_order = [61, 34, 33, 32, 42, 17, 68, 29, 26, 45]
 
-    # easy_card_order = [52, 46, 66, 43, 76, 11,  8, 80, 67, 51]
-    # difficult_card_order = [37, 36,  1, 70, 32, 56, 31, 13, 34, 12]
-
     card_orders = [easy_card_order, difficult_card_order]
-    card_num = 10
     
-    num_iter = 1
+    num_iter = 160
     
-    learner_acc = np.zeros((2, num_iter, 8))
+    learner_acc = np.zeros((2, len(names), num_iter, 8))
     for difficulty_num, difficulty in enumerate(['EASY', 'DIFFICULT']):
+        print(difficulty)
         true_hyp = create_specific_hypothesis(difficulty)
-        for ind in range(num_iter):
-            acc = learner_model(true_hyp, card_orders[difficulty_num])
-            learner_acc[difficulty_num, ind,:] = acc
-            print(ind)
-    learner_avg = np.mean(learner_acc, axis=1)
-    learner_std = np.std(learner_acc, axis=1)
+        
+        for weight_ind in range(len(names)):
+            for ind in range(num_iter):
+                acc = learner_model(true_hyp, card_orders[difficulty_num], hyp_weights=weight_arrs[weight_ind])
+                learner_acc[difficulty_num, weight_ind, ind,:] = acc
+                print('Weight', weight_ind+1, 'Iteration', ind+1)
+
+    learner_avg = np.mean(learner_acc, axis=2)
+    learner_std = np.std(learner_acc, axis=2)
 
     print(learner_avg)
-    plt.rcParams['font.size'] = 16
+    # plt.rcParams['font.size'] = 16
     fig, ax = plt.subplots(2, 1, sharex=True, sharey=True)
-
-    ax[0].errorbar(np.arange(8), learner_avg[0, :], yerr=learner_std[0, :], label='Learner Model')
-    ax[1].errorbar(np.arange(8), learner_avg[1, :], yerr=learner_std[1,:], label='Learner Model')
+    
+    for weight_ind in range(len(names)):
+        ax[0].errorbar(np.arange(8), learner_avg[0, weight_ind, :], yerr=learner_std[0, weight_ind, :], label='Learner Model ' + names[weight_ind])
+        ax[1].errorbar(np.arange(8), learner_avg[1, weight_ind, :], yerr=learner_std[1, weight_ind, :], label='Learner Model ' + names[weight_ind])
 
     ax[0].set_ylabel('Accuracy')
     ax[1].set_ylabel('Accuracy')
@@ -385,17 +588,19 @@ def plot_human_comparison():
     ax[1].legend()
     plt.show()
 
-# plot_human_comparison()
+
 # all_hyp, diff_arr = create_all_hypotheses(reset=True)
+# print(len(all_hyp))
 # filehandler = open('data/hypotheses.pkl',"wb")
 # pkl.dump({'hyp': all_hyp, 'diff': diff_arr},filehandler)
 # filehandler.close()
 
 # print(create_card_order(create_specific_hypothesis('EASY'), 10))
 # print(create_card_order(create_specific_hypothesis('DIFFICULT'), 10))
-true_hyp = create_specific_hypothesis('DIFFICULT')
-difficult_card_order = [61, 34, 33, 32, 42, 17, 68, 29, 26, 45]
-learner_model(true_hyp, difficult_card_order)
+# true_hyp = create_specific_hypothesis('DIFFICULT')
+# difficult_card_order = [61, 34, 33, 32, 42, 17, 68, 29, 26, 45]
+# learner_model(true_hyp, difficult_card_order)
+plot_human_comparison()
 
 
 
